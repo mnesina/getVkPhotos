@@ -13,10 +13,6 @@
 # NB можно попробовать переделать на https://pypi.org/project/vk-requests/ https://github.com/prawn-cake/vk-requests
 # TODO:
 # - в служебных альбомах добавить соответствующий заголовок (c запросом информации по пользователю/группе (?)
-# + в фото с пользователем, видимо, информацию по альбомам откуда фото фзяты (?)
-# + сохранение всей информации в файл (html ? тогда с тубнейлами? что под них использовать?)
-# + получение первичных данных из диалога (?) и хранение (? или удаление после использования) в ini-файле (?)
-# + в диалоге же выдаем информацию об обозначении служебных каталогов
 
 
 
@@ -64,11 +60,14 @@ class getPhotos():
         config = configparser.ConfigParser()
         config.read(configfile)
 
-        # Читаем некоторые значения из конфиг. файла.
+        # Читаем значения из конфигурационного файла.
         #self.__version_n = config.get("Settings", "version_n") # версия API VK
 
 
         self.__in_dir = config.get("Settings", "in_dir") # каталог для скачивания фото
+
+        # логин и пароль - эти значения могут оставться пустыми,
+        # тогда доступны будут только открытые для всех альбомы
         if config.has_option("Settings", "login"):
             self.__login = config.get("Settings", "login")
         else:
@@ -79,9 +78,12 @@ class getPhotos():
         else:
             self.__password = ''
 
+        # Обязательный параметр - ID приложения, созданного в контакте для работы этого скрипта
         self.__vk_id = config.get("Settings", "vk_id")
+        # token приложения, созданного в контакте для работы этого скрипта (при отсутствии логина-пароля работа идет через token)
         self.__service_token = config.get("Settings", "service_token")
 
+        # параметры "прибитые гвоздем"
         self.__version_n = "5.78"
         self.__scope = 'photos'
 
@@ -127,14 +129,14 @@ class getPhotos():
         password = self.__password
         vk_id = self.__vk_id
 
-        token = self.__service_token #'cc13c81fcc13c81fcc13c81f37cc71c76eccc13cc13c81f96a9e7d32caf1e3b37bd51a4'
+        token = self.__service_token
         scope = self.__scope #'photos'
 
         if login=='':
-            print ('No login')
+            #print ('No login')
             vkapi = vk_requests.create_api(app_id=vk_id,service_token=token, scope=scope,api_version=version_n)
         else:
-            print('Login')
+            #print('Login')
             vkapi = vk_requests.create_api(app_id=vk_id,login=login,password=password,scope=scope,api_version=version_n)
         print("Введите url альбома \nнапример: https://vk.com/album2309870_259395754\nЕсли Вам нужно скачать фотографии профиля,\nфото со стены пользователя,\nсохраненные фотографии пользователя,\nили фотографии с пользователем\n")
         print("введите соответственно \nhttps://vk.com/album1234567_0 - фотографии профиля,\nhttps://vk.com/album1234567_00 - фото со стены пользователя,\nhttps://vk.com/album1234567_000 - сохраненные фотографии пользователя,\nhttps://vk.com/album1234567_0000 -  фотографии с пользователем\n")
@@ -214,11 +216,9 @@ class getPhotos():
                     photos = vkapi.photos.get(owner_id=owner_id, album_id=album_id, count=1000, offset=j * 1000,
                                               v=version_n, extended=1)  # Получаем список фото
             except vk_requests.exceptions.VkAPIError as vk_error:
-                # print(vk_error) error_code=7,message='Permission to perform this action is denied',request_params={'v': '5.78', 'oauth': '1', 'count': '1000', 'offset': '0', 'method': 'photos.getUserPhotos', 'user_id': 'номер'}
                 error_code = vk_error.error_data['error_code']
                 error_msg = vk_error.error_data['error_msg']
                 print('Что-то пошло не так :( Код ошибки: ', error_code, ', сообщение: ', error_msg)
-                # print(vk_error.error_data) {'request_params': [{'key': 'oauth', 'value': '1'}, {'key': 'method', 'value': 'photos.getUserPhotos'}, {'key': 'offset', 'value': '0'}, {'key': 'v', 'value': '5.78'}, {'key': 'user_id', 'value': 'номер'}, {'key': 'count', 'value': '1000'}], 'error_code': 7, 'error_msg': 'Permission to perform this action is denied'}
                 exit()
 
             for photo in photos['items']:
@@ -226,10 +226,6 @@ class getPhotos():
                 photoNmaes = []
                 preview = ''
                 # print(photo)
-
-                # "id": 456242737,
-                # "album_id": 259226725,
-                # "owner_id": 2309870,
 
                 photo_url = 'https://vk.com/photo%s_%s' % (photo['owner_id'], photo['id'])
 
@@ -288,7 +284,7 @@ class getPhotos():
                 photos_count, photos_count - breaked, breaked, round(time_for_dw, 1)))
 
         resHtml = self.doHtml(self.albumUrl,album_title, album_description,tmpResult)
-        #print(resHtml)
+
         fpath = photo_folder+"/index.html"
         f = open(fpath, 'w')
         f.write(resHtml)
@@ -304,10 +300,8 @@ class getPhotos():
             with tag('a', target="_blank", href=photo_url):
                 text(photo_url)
         if preview!='':
-            #doc.asis('<img src="'+preview+'"/>')
             doc.stag('img', src=preview, klass="photo")
         else:
-            #doc.asis('<img src="' + photoNmaes[0] + '"/>')
             doc.stag('img', src=photoNmaes[0], klass="photo")
         if photo_text!='':
             with tag ('br'):
@@ -355,15 +349,12 @@ class getPhotos():
                         album_description
                 doc.asis(tmpHtml)
 
-        # result = indent(doc.getvalue())
         result = indent(
             doc.getvalue(),
             indentation='    ',
             newline='\r\n',
             indent_text=True
         )
-        # print(doc.getvalue())
-        #print(result)
         return result
 
 if __name__ == "__main__":
