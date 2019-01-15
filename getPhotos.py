@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-  ### для python2, но, скорей всего, для универсального скрипта руки не дойдут
+
 # Cкрипт скачивает альбомы с фотографиями во всех имеющихся размерах, включая и технические альбомы:
 #       - фотографии профиля
 #       - фотографии со стены пользователя
@@ -32,6 +34,9 @@ https://vk.com/dev/photos.getUserPhotos
 sudo pip3 install vk_requests
 
 sudo pip3 install yattag # http://www.yattag.org
+
+
+configparser
 '''
 
 
@@ -41,7 +46,7 @@ from urllib.request import urlretrieve
 
 from yattag import Doc, indent # библиотека для формирования HTML http://www.yattag.org
 
-import vk_requests, os, time, math, configparser
+import sys, vk_requests, os, time, math, configparser
 
 class getPhotos():
     """
@@ -224,14 +229,14 @@ class getPhotos():
             for photo in photos['items']:
                 counter += 1
                 photoNmaes = []
-                preview = ''
-                # print(photo)
+                preview = '' # Зарезервировано под адрем превьюшки для генерируемого html-файла
+                # print(photo) # Если нужна отладка
 
-                photo_url = 'https://vk.com/photo%s_%s' % (photo['owner_id'], photo['id'])
+                photo_url = 'https://vk.com/photo%s_%s' % (photo['owner_id'], photo['id']) # URL картинки
 
-                photo_text = ''
-                photo_lat = ''
-                photo_long = ''
+                photo_text = '' # Зарезервировано под подпись к картинке (может отсутствовать)
+                photo_lat = ''  # Зарезервировано под координату-широту (может отсутствовать)
+                photo_long = '' # Зарезервировано под координату-долготу (может отсутствовать)
 
                 if 'text' in photo:
                     photo_text = photo['text']
@@ -240,12 +245,12 @@ class getPhotos():
                 if 'long' in photo:
                     photo_long = photo['long']
 
-                print('Фото %s %s  подпись: %s ' % (
-                counter, photo_url, photo_text))
+                # Вывод информации в ходе работы - можно закомментировать - начало
+                print('Фото %s %s  подпись: %s ' % (counter, photo_url, photo_text))
 
                 if photo_lat != '' and photo_long != '':
                     print('Координаты: %s,%s' % (photo_lat, photo_long))
-
+                # Вывод информации в ходе работы - можно закомментировать - конец
 
                 for photo_in in photo['sizes']:
                     photo_width = photo_in['width']
@@ -259,10 +264,9 @@ class getPhotos():
                     fname = photo_folder_in_in + "/" + os.path.split(url)[1];
                     if not os.path.exists(photo_folder_in + "/" + os.path.split(url)[1]):
 
-                        print(
-                            'Загружаю фото № {} из {} размером {}x{}.  url: {} Загружаем в: {}/{} Прогресс: {} '.format(
+                        print('Загружаю фото № {} из {} размером {}x{}.  url: {} Загружаем в: {}/{} Прогресс: {} '.format(
                                 counter, photos_count, photo_width, photo_height, url, photo_folder_in,
-                                os.path.split(url)[1], prog))
+                                os.path.split(url)[1], prog)) # Вывод информации в ходе работы - можно закомментировать
                         prog = round(100 / photos_count * counter, 2)
                         try:
                             urlretrieve(url,photo_folder_in + "/" + os.path.split(url)[1])  # Загружаем и сохраняем файл
@@ -279,9 +283,8 @@ class getPhotos():
                             preview = fname
                 tmpResult += self.prepareHtml(photo_url, photo_text, photo_lat, photo_long,preview,photoNmaes)
         time_for_dw = time.time() - time_now
-        print(
-            "\nВ очереди было файлов: {}. Из них удачно загружено файлов: {}, {} не удалось загрузить. Затрачено времени: {} сек.\n\n".format(
-                photos_count, photos_count - breaked, breaked, round(time_for_dw, 1)))
+        print("\nВ очереди было файлов: {}. Из них удачно загружено файлов: {}, {} не удалось загрузить. Затрачено времени: {} сек.\n\n".format(
+                photos_count, photos_count - breaked, breaked, round(time_for_dw, 1))) # Вывод итоговой информации в ходе работы - можно закомментировать
 
         resHtml = self.doHtml(self.albumUrl,album_title, album_description,tmpResult)
 
@@ -358,7 +361,12 @@ class getPhotos():
         return result
 
 if __name__ == "__main__":
-    path = "settings.ini"
+    # По умолчанию файл настроек settings.ini Если нужен другой, вызываем скрипт с аргументом: python3 getPhotos.py settings1.ini
+    if len(sys.argv) < 2:
+        path = "settings.ini"
+    else:
+        path = sys.argv[1]
+
     getPhotos(path,False)
 
 
