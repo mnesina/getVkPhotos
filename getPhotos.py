@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Работа - под python 3
 # Cкрипт скачивает альбомы с фотографиями во всех имеющихся размерах, включая и технические альбомы:
 #       - фотографии профиля
@@ -13,7 +15,7 @@
 # Само скачивание взято у https://proglib.io/p/python-vk-api-1/ , но переделано под другую библиотеку и добавлены другие опции по VK API и просто удобные для работы
 # NB можно попробовать переделать на https://pypi.org/project/vk-requests/ https://github.com/prawn-cake/vk-requests
 # TODO:
-# - в служебных альбомах добавить соответствующий заголовок (c запросом информации по пользователю/группе (?)
+# - в служебных альбомах добавить соответствующий заголовок (c запросом информации по пользователю/группе (?))
 
 
 
@@ -29,13 +31,15 @@ https://vk.com/dev/photos.get
 Используется VK API метод photos.getUserPhotos
 https://vk.com/dev/photos.getUserPhotos
 
+###
 Требуемые библиотеки:
+
 sudo pip3 install vk_requests
 
 sudo pip3 install yattag # http://www.yattag.org
 
-
-configparser
+###
+с конфигурационным файлом работаем при помощи configparser
 '''
 
 
@@ -47,13 +51,13 @@ from yattag import Doc, indent # библиотека для формирова�
 
 import sys, vk_requests, os, time, math, configparser
 
-class getPhotos():
+class GetPhotos:
     """
     Класс для скачивания фотографий из албомов VK
     """
 
     def __init__(self, configfile='settings.ini',rewrite=False):
-        """ Inits
+        """ Constructor
         """
 
         if not os.path.exists(configfile):
@@ -280,19 +284,19 @@ class getPhotos():
                         photoNmaes.append(fname)
                         if photo_width == 200:
                             preview = fname
-                tmpResult += self.prepareHtml(photo_url, photo_text, photo_lat, photo_long,preview,photoNmaes)
+                tmpResult += self.__prepareHtml(photo_url, photo_text, photo_lat, photo_long,preview,photoNmaes)
         time_for_dw = time.time() - time_now
         print("\nВ очереди было файлов: {}. Из них удачно загружено файлов: {}, {} не удалось загрузить. Затрачено времени: {} сек.\n\n".format(
                 photos_count, photos_count - breaked, breaked, round(time_for_dw, 1))) # Вывод итоговой информации в ходе работы - можно закомментировать
 
-        resHtml = self.doHtml(self.albumUrl,album_title, album_description,tmpResult)
+        resHtml = self.__doHtml(self.albumUrl,album_title, album_description,tmpResult)
 
         fpath = photo_folder+"/index.html"
         f = open(fpath, 'w')
         f.write(resHtml)
         f.close()
 
-    def prepareHtml(self,photo_url,photo_text,photo_lat,photo_long,preview,photoNmaes):
+    def __prepareHtml(self,photo_url,photo_text,photo_lat,photo_long,preview,photoNmaes):
         #from yattag import Doc
         #from yattag import indent
 
@@ -325,7 +329,7 @@ class getPhotos():
         )
         return (result)
 
-    def doHtml(self, url, album_title, album_description, tmpHtml):
+    def __doHtml(self, url, album_title, album_description, tmpHtml):
         #from yattag import Doc
         #from yattag import indent
 
@@ -361,12 +365,13 @@ class getPhotos():
 
 if __name__ == "__main__":
     # По умолчанию файл настроек settings.ini Если нужен другой, вызываем скрипт с аргументом: python3 getPhotos.py settings1.ini
+    # Все остальное делается внутри класса GetPhotos
     if len(sys.argv) < 2:
         path = "settings.ini"
     else:
         path = sys.argv[1]
 
-    getPhotos(path,False)
+    GetPhotos(path,False)
 
 
 
