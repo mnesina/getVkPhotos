@@ -16,6 +16,9 @@
 # NB можно попробовать переделать на https://pypi.org/project/vk-requests/ https://github.com/prawn-cake/vk-requests
 # TODO:
 # - в служебных альбомах добавить соответствующий заголовок (c запросом информации по пользователю/группе (?))
+#
+# Author: Maryanna Nesina
+# Usage: ./getPhotos.py [settings.nnn.ini] or python3 getPhotos.py [settings.nnn.ini]
 
 
 
